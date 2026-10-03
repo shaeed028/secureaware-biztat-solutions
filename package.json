@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "node --watch server/index.js",
     "start": "node server/index.js",
-    "build": "node --check server/index.js && node --check server/db/postgres-sync.js && node --check server/db/postgres-worker.js && node --check public/app.js && node --check api/[...].js",
+    "build": "node --check server/index.js && node --check server/db/connection-config.js && node --check server/db/postgres-sync.js && node --check server/db/postgres-worker.js && node --check public/app.js && node --check api/[...].js",
     "test": "node --test",
     "backup": "node scripts/backup.js",
     "restore": "node scripts/restore.js"

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { newDb } from "pg-mem";
 import { translateSql } from "../server/db/postgres-sync.js";
+import { connectionConfig } from "../server/db/connection-config.js";
 import { migrate as policySchema } from "../server/modules/policy/schema.js";
 import { migrate as trainingSchema } from "../server/modules/training/schema.js";
 import { seedPolicies, seedPolicyDemoActivity } from "../server/modules/policy/seed.js";
@@ -24,6 +25,18 @@ test("PostgreSQL adapter converts SQLite placeholders and conflict handling", ()
     translateSql("SELECT * FROM users WHERE (? IS NULL OR department = ?)"),
     "SELECT * FROM users WHERE (CAST($1 AS TEXT) IS NULL OR department = $2)"
   );
+});
+
+test("Supabase TLS is encrypted for demos and certificate-verified when a CA is configured", () => {
+  const DATABASE_URL = "postgresql://postgres.project:example%23pass@pooler.example.com:6543/postgres?sslmode=require";
+  const demo = connectionConfig({ DATABASE_URL, SECUREAWARE_DEMO_DATA: "on" });
+  assert.equal(demo.port, 6543);
+  assert.equal(demo.password, "example#pass");
+  assert.deepEqual(demo.ssl, { rejectUnauthorized: false });
+  const verified = connectionConfig({ DATABASE_URL, SUPABASE_DB_CA_CERT: "-----BEGIN CERTIFICATE-----\\nexample\\n-----END CERTIFICATE-----" });
+  assert.equal(verified.ssl.rejectUnauthorized, true);
+  assert.match(verified.ssl.ca, /\nexample\n/);
+  assert.throws(() => connectionConfig({ DATABASE_URL }), /SUPABASE_DB_CA_CERT/);
 });
 
 test("PostgreSQL adapter converts JSON array searches", () => {

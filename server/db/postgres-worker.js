@@ -1,5 +1,6 @@
 import { workerData } from "node:worker_threads";
 import pg from "pg";
+import { connectionConfig } from "./connection-config.js";
 
 const { Client, types } = pg;
 types.setTypeParser(20, (value) => Number(value));
@@ -8,12 +9,7 @@ let client;
 
 async function connectedClient() {
   if (client) return client;
-  const next = new Client({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: true },
-    connectionTimeoutMillis: 10_000,
-    query_timeout: 20_000
-  });
+  const next = new Client(connectionConfig());
   await next.connect();
   next.on("error", () => { if (client === next) client = undefined; });
   client = next;

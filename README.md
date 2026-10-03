@@ -39,6 +39,8 @@ The service runs the build and test commands before starting. Render supplies `P
 
 In Supabase, open **Connect → Transaction pooler**. In Vercel project settings, add its full connection string as a secret environment variable named `DATABASE_URL` for Production (and Preview if needed). Keep the password out of Git and chat. The pooler URL uses port `6543`; do not use the direct `db.<project-ref>.supabase.co:5432` URL for Vercel. Remove any old `SECUREAWARE_IN_MEMORY` environment variable in Vercel. Redeploy after saving environment variables. The first startup creates the schema and fictional seed records; the previous in-memory Vercel data cannot be recovered. Local development still defaults to SQLite. The `backup` and `restore` scripts are SQLite-only and are not PostgreSQL backup tools.
 
+For this academic demo, the database connection requires encryption but does not verify the server certificate unless `SUPABASE_DB_CA_CERT` is set. For verified TLS, download the project's root certificate from **Supabase → Database Settings → SSL Configuration** and put its PEM text in the Vercel secret environment variable `SUPABASE_DB_CA_CERT` (literal line breaks or `\n` both work). Verified TLS is required when `SECUREAWARE_DEMO_DATA` is not `on`.
+
 `SECUREAWARE_DEMO_DATA=on` is configured in `vercel.json` for the academic prototype. This enables the published fictional demo credentials; remove the setting before storing real data or opening the site to real users.
 
 ## Educational Use and Readiness
