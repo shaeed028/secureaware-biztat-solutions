@@ -3,8 +3,8 @@
   "buildCommand": "npm run build",
   "functions": {
     "api/[...].js": {
-      "includeFiles": "server/modules/**",
-      "maxDuration": 30
+      "includeFiles": "server/**",
+      "maxDuration": 60
     }
   },
   "rewrites": [
@@ -14,7 +14,6 @@
     }
   ],
   "env": {
-    "SECUREAWARE_IN_MEMORY": "on",
     "SECUREAWARE_DEMO_DATA": "on"
   }
 }

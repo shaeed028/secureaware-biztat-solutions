@@ -11,9 +11,10 @@ SecureAware is an information security policy awareness and compliance managemen
 
 ## Run
 
-Requires Node.js 22.5 or later (uses the built-in `node:sqlite`). No npm packages are needed.
+Requires Node.js 22.13 or later. Install the pinned dependencies first; local development uses the built-in SQLite database unless `DATABASE_URL` is set.
 
 ```bash
+npm install
 npm run dev
 ```
 
@@ -32,11 +33,13 @@ The included `render.yaml` configures a free Node web service for an academic de
 
 The service runs the build and test commands before starting. Render supplies `PORT`, and the service binds to `0.0.0.0` in production. Free Render services use an ephemeral filesystem, so SQLite data can reset after a restart, spin-down or redeployment. Production does not seed demo users or sample activity by default. Set `SECUREAWARE_DEMO_DATA=on` only for an isolated demonstration; known seeded passwords are rejected in production when this setting is not enabled. Demo records are seeded again when a new database is created with that opt-in enabled.
 
-## Deploy to Vercel (disposable demo)
+## Deploy to Vercel with Supabase PostgreSQL
 
-`vercel.json` routes every `/api/*` request through one Node Function and enables `SECUREAWARE_IN_MEMORY=on`. The frontend is served from `public/`. This mode deliberately starts from the fictional seed data whenever Vercel creates a cold Function instance. Changes, sessions, new users and progress can reset without warning or differ between concurrently active instances. It is suitable only for a short academic demonstration, never real users or durable evidence. Use an external database before production use.
+`vercel.json` routes every `/api/*` request through one Node Function. The frontend is served from `public/`. Vercel now requires a PostgreSQL connection and will refuse to start without it; sessions, users and progress are stored in Supabase rather than a disposable Function instance.
 
-Deploy through the Vercel Git integration, or run `npx vercel` for a preview and `npx vercel --prod` for production. Select Node.js 22.x in the Vercel project settings.
+In Supabase, open **Connect → Transaction pooler**. In Vercel project settings, add its full connection string as a secret environment variable named `DATABASE_URL` for Production (and Preview if needed). Keep the password out of Git and chat. The pooler URL uses port `6543`; do not use the direct `db.<project-ref>.supabase.co:5432` URL for Vercel. Remove any old `SECUREAWARE_IN_MEMORY` environment variable in Vercel. Redeploy after saving environment variables. The first startup creates the schema and fictional seed records; the previous in-memory Vercel data cannot be recovered. Local development still defaults to SQLite. The `backup` and `restore` scripts are SQLite-only and are not PostgreSQL backup tools.
+
+`SECUREAWARE_DEMO_DATA=on` is configured in `vercel.json` for the academic prototype. This enables the published fictional demo credentials; remove the setting before storing real data or opening the site to real users.
 
 ## Educational Use and Readiness
 
@@ -140,7 +143,7 @@ Node HTTP server (server/index.js)
    |  Module discovery: server/modules/<name>/index.js
 Feature modules (server/modules/compliance/, policy/, training/, users/)
    |
-SQLite (node:sqlite, parameterised statements only)
+SQLite locally (node:sqlite); Supabase PostgreSQL on Vercel (parameterised queries)
 ```
 
 ## ER Overview

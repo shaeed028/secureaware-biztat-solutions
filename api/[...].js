@@ -1,5 +1,5 @@
-// All API paths are rewritten to this single Vercel Function so the in-memory database,
-// sessions and module state have the best chance of sharing one warm function instance.
+// All API paths are rewritten to this single Vercel Function. PostgreSQL keeps
+// sessions and app data durable across cold starts and independent instances.
 import { handleRequest } from "../server/index.js";
 
 export default function handler(request, response) {

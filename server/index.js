@@ -4,13 +4,16 @@ import http from "node:http";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { PostgresSync } from "./db/postgres-sync.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const publicDir = path.join(root, "public");
 const dataDir = path.join(root, "data");
-// Vercel Functions do not provide durable local storage. The explicit in-memory mode is
-// therefore useful only for disposable demonstrations: every cold start begins from seeds.
-const inMemoryDatabase = process.env.SECUREAWARE_IN_MEMORY === "on" || Boolean(process.env.VERCEL);
+// On Vercel, fail closed if the durable database is not configured. Local SQLite
+// remains available for development and the existing isolated test suite.
+const usePostgres = Boolean(process.env.DATABASE_URL) && !process.env.SECUREAWARE_DB;
+if (process.env.VERCEL && !usePostgres) throw new Error("DATABASE_URL must be configured on Vercel");
+const inMemoryDatabase = !usePostgres && process.env.SECUREAWARE_IN_MEMORY === "on";
 const dbPath = process.env.SECUREAWARE_DB || (inMemoryDatabase ? ":memory:" : path.join(dataDir, "secureaware.sqlite"));
 const port = Number(process.env.PORT || 4000);
 const sessionIdleMs = Number(process.env.SESSION_IDLE_MINUTES || 30) * 60 * 1000;
@@ -26,9 +29,9 @@ const demoPasswords = new Map([
   ["system.admin", "SystemPass!2026"]
 ]);
 
-if (dbPath !== ":memory:") fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+if (!usePostgres && dbPath !== ":memory:") fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 
-const db = new DatabaseSync(dbPath);
+const db = usePostgres ? new PostgresSync() : new DatabaseSync(dbPath);
 db.exec("PRAGMA foreign_keys = ON");
 db.exec("PRAGMA journal_mode = WAL");
 db.exec(`

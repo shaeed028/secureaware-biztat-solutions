@@ -9,7 +9,7 @@ export function createMatrix(db, notify) {
     requirementsFor: db.prepare(`SELECT r.course_id, MIN(r.due_in_days) AS due_in_days, c.title, c.slug FROM training_role_requirements r
       JOIN training_courses c ON c.id = r.course_id
       WHERE c.status = 'published' AND (r.role = '*' OR r.role = ?) AND (r.department IS NULL OR r.department = ?)
-      GROUP BY r.course_id`),
+      GROUP BY r.course_id, c.title, c.slug`),
     insertAssignment: db.prepare(`INSERT OR IGNORE INTO training_assignments (course_id,target_type,target_value,due_date,mandatory,source,assigned_by,created_at)
       VALUES (?,'user',?,?,1,'matrix',NULL,?)`),
     matrixAssignments: db.prepare("SELECT id, course_id FROM training_assignments WHERE source = 'matrix' AND target_type = 'user' AND target_value = ?"),
